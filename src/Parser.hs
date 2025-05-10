@@ -74,6 +74,8 @@ instance Alternative Parser where
 -- Parsed 'b' (Position 1 "ar")
 -- >>> parse (satisfy (>= 'b')) "abc"
 -- Failed [Position 0 (Unexpected 'a')]
+-- >>> parse (satisfy (>= 'b')) ""
+-- Failed [Position 0 EndOfInput]
 --
 satisfy :: (Char -> Bool) -> Parser Char
 satisfy = error "TODO: define satisfy"
