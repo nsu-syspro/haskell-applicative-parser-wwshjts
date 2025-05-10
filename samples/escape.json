@@ -1,0 +1,14 @@
+{"data": [
+  {
+    "key": 0,
+    "value": "test"
+  },
+  {
+    "key": 1,
+    "value": "something \"quoted\""
+  },
+  {
+    "key": 2,
+    "value": "one\\two\\\"three\""
+  }
+]}

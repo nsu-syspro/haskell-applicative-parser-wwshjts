@@ -1,0 +1,1 @@
+{"data": [{"key": 0.0, "value": "test"}, {"key": 1.0, "value": "something \"quoted\""}, {"key": 2.0, "value": "one\\two\\\"three\""}]}

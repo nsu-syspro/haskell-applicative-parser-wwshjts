@@ -3,21 +3,40 @@
 
 module Task1 where
 
--- Explicit import of Prelude to hide functions
--- that are not supposed to be used in this assignment
-import Prelude hiding (foldl, foldr, product)
+import Parser
 
--- | Computes factorial of given number
---
---   n! = 1 * 2 * ... * n
+-- | Parses natural number (including zero)
 --
 -- Usage example:
 --
--- >>> factorial 5
--- 120
+-- >>> parse nat "0"
+-- Parsed 0 (Input 1 "")
+-- >>> parse nat "123"
+-- Parsed 123 (Input 3 "")
+-- >>> parse nat "-123"
+-- Failed [PosError 0 (Unexpected '-')]
+-- >>> parse nat "abc"
+-- Failed [PosError 0 (Unexpected 'a')]
+-- >>> parse nat "123abc"
+-- Parsed 123 (Input 3 "abc")
 --
-factorial :: Integer -> Integer
--- Stub implementation for use in actual assignment
--- factorial = error "TODO: define factorial"
-factorial 0 = 1
-factorial n = n * factorial (n - 1)
+nat :: Parser Integer
+nat = error "TODO: define nat"
+
+-- | Parses integer number
+--
+-- Usage example:
+--
+-- >>> parse int "0"
+-- Parsed 0 (Input 1 "")
+-- >>> parse int "123"
+-- Parsed 123 (Input 3 "")
+-- >>> parse int "-123"
+-- Parsed (-123) (Input 4 "")
+-- >>> parse int "abc"
+-- Failed [PosError 0 (Unexpected 'a')]
+-- >>> parse int "123abc"
+-- Parsed 123 (Input 3 "abc")
+--
+int :: Parser Integer
+int = error "TODO: define int"
