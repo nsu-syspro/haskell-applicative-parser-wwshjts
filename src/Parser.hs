@@ -1,6 +1,9 @@
 {-# OPTIONS_GHC -Wall #-}
 -- The above pragma enables all warnings
 
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
+-- The above pragma temporarily disables warnings about Parser constructor and runParser not being used
+
 module Parser
   ( Parser
   , parse
