@@ -107,10 +107,10 @@ In essence parser is a function that processes its *input* string
 and either returns parsed value in a more structured format together
 with remaining string to parse, or fails with some parsing error,
 ideally indicating where the parsing failed and why (the quality of error
-reporting directly correlates with ease of use of you parser).
+reporting directly correlates with ease of use of your parser).
 
 So to keep track of current position and remaining input to parse,
-there parser needs to both receive and return both position and the string:
+parser needs to receive and return both position and the string that is being parsed:
 
 ```haskell
 -- | Parser input encapsulating remaining string to be parsed with current position
@@ -123,7 +123,7 @@ data Parsed a =
 ```
 
 > Note that instead of just single error, `Failed` constructor accepts list of errors,
-> each with its own position where it occurred. This will be useful for situations,
+> each with its own position where the error occurred. This will be useful for situations,
 > when parser will have to try several possible *alternatives* and all of them failed to parse.
 
 The data type `Position a` encapsulates annotation of value of type `a` with position:
@@ -145,6 +145,7 @@ data Error =
 > [!TIP]
 >
 > Feel free to add more error kinds to simplify debugging for yourself!
+>
 > Automated tests only check the fact of success or failure, not the exact
 > errors that are reported (see `parseMaybe` below).
 
@@ -177,13 +178,13 @@ for `Parser`.
 
 > [!NOTE]
 >
-> When implementing `Alternative` instance (particularly `(<|>)` operator,
+> When implementing `Alternative` instance (particularly `(<|>)` operator),
 > make sure to accumulate errors if both parsers fail.
 > It is also useful to deduplicate errors while accumulating them.
 
 ### `satisfy`
 
-The most basic building block for more complex parser and combinators is function `satisfy`
+The most basic building block for more complex parsers is function `satisfy`
 (for you to implement) which parses single character if it satisfies given predicate:
 
 ```haskell
@@ -212,9 +213,9 @@ Failed [Position 0 EndOfInput]
 
 ### Parser combinators
 
-Now it is time to implement your own library of parser combinators
+Now it is time to implement your own library of *parser combinators*
 in [src/ParserCombinators.hs](src/ParserCombinators.hs), where we
-have already provided you with some of usual combinator ideas.
+have already provided you with a skeleton of usual combinator ideas.
 However, you should improve and extend this library as you solve the rest of the tasks.
 
 > [!TIP]
@@ -266,8 +267,8 @@ in [src/Task1.hs](src/Task1.hs):
 
 ## Task 2 (3 points)
 
-The second task is to construct parser for dates in
-in one of three common formats given as BNF:
+The second task is to construct parser for dates
+in one of three common formats given as [BNF](https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form):
 
 ```haskell
 date ::= dotFormat | hyphenFormat | usFormat
@@ -292,11 +293,12 @@ Here are examples of valid dates:
 
 - `01.01.2012` (dot format)
 - `12.12.2012` (dot format)
+- `01-01-2012` (hyphen format)
 - `12-12-2012` (hyphen format)
 - `Jan 1 2012` (US format)
 - `Dec 12 2012` (US format)
 
-Note that because the formats are given as context-free grammar,
+Note that because the formats are given as [context-free grammar](https://en.wikipedia.org/wiki/Context-free_grammar),
 they cannot distinguish between months that contain different number of days
 and detect leap years (that is not the job of parser after all).
 
@@ -376,11 +378,11 @@ data JValue =
 And in directory [samples](samples) you can find some JSON samples
 which you can use to test your implementation, as well as their
 *expected* rendered format in `.expected` files
-(see next section [Rendering](#rendering)).
+(see section [Rendering](#rendering) below).
 
 ### Parsing
 
-Your task is to implement the following parser 'json`:
+Your task is to implement the following parser `json`:
 
 ```haskell
 json :: Parser JValue
@@ -423,10 +425,10 @@ Or to get a nicely rendered representation which can be directly compared with
 ```
 
 > All `.expected` files directly correspond to the format in which `render` function
-> renders given `JValue`, so you can use it as a reference.
+> displays given `JValue`, so you can use it as a reference.
 
 Note that when rendering `JValue` directly in GHCi, you will end up with escaped version
-of rendered string. To avoid that you can pass this string to function `putStrLn`, which
+of rendered string. To avoid that, you can pass this string to function `putStrLn` which
 will print you unescaped representation:
 
 ```haskell
