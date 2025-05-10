@@ -86,7 +86,7 @@ jobs:
         setup-command: '' # (Optional) Run before the test is run.
         command: stack test --system-ghc --test-arguments "--color always -p Task1"
         timeout: 1 # The amount of minutes the test is allowed to run before it is killed. Maximum 60 minutes.
-        max-score: 2 # (Optional) The amount of points awarded if the test passes.
+        max-score: 3 # (Optional) The amount of points awarded if the test passes.
 
     - name: 'Task #2'
       id: task-2
@@ -96,7 +96,7 @@ jobs:
         setup-command: '' # (Optional) Run before the test is run.
         command: stack test --system-ghc --test-arguments "--color always -p Task2"
         timeout: 1 # The amount of minutes the test is allowed to run before it is killed. Maximum 60 minutes.
-        max-score: 4 # (Optional) The amount of points awarded if the test passes.
+        max-score: 3 # (Optional) The amount of points awarded if the test passes.
 
     - name: 'Task #3'
       id: task-3
