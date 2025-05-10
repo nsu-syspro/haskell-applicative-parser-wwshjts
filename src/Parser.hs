@@ -5,7 +5,12 @@
 -- The above pragma temporarily disables warnings about Parser constructor and runParser not being used
 
 module Parser
-  ( Parser
+  ( -- * Important note
+    -- 
+    -- | The implementation of 'Parser' is intentionally
+    -- hidden to other modules to encourage use of high level
+    -- combinators like 'satisfy' and the ones from 'ParserCombinators'
+    Parser
   , parse
   , parseMaybe
   , satisfy
