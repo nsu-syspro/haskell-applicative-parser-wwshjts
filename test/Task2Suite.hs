@@ -52,7 +52,7 @@ hyphenFormat :: Date -> String
 hyphenFormat (Date (Day d) (Month m) (Year y)) = intercalate "-" [zeroExtended d, zeroExtended m, show y]
 
 usFormat :: Date -> String
-usFormat (Date (Day d) (Month m) (Year y)) = unwords [monthName m, zeroExtended d, show y]
+usFormat (Date (Day d) (Month m) (Year y)) = unwords [monthName m, show d, show y]
 
 zeroExtended :: Int -> String
 zeroExtended n
@@ -95,7 +95,7 @@ badHyphenFormat :: Int -> Int -> Int -> String
 badHyphenFormat d m y = intercalate "-" [show d, show m, show y]
 
 badUsFormat :: Int -> Int -> Int -> String
-badUsFormat d m y = unwords [badMonthName m, show d, show y]
+badUsFormat d m y = unwords [badMonthName m, zeroExtended d, show y]
 
 badMonthName :: Int -> String
 badMonthName n = mix $ months !! (n `mod` 12)

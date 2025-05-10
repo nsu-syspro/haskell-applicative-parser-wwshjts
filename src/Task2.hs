@@ -27,8 +27,9 @@ newtype Year  = Year  Int deriving (Show, Eq)
 --
 -- dotFormat ::= day "." month "." year
 -- hyphenFormat ::= day "-" month "-" year
--- usFormat ::= monthName " " day " " year
+-- usFormat ::= monthName " " usDay " " year
 --
+-- usDate ::= nonZeroDigit | "1" digit | "2" digit | "30" | "31"
 -- day ::= "0" nonZeroDigit | "1" digit | "2" digit | "30" | "31"
 -- month ::= "0" nonZeroDigit | "10" | "11" | "12"
 -- year ::= number
@@ -50,6 +51,8 @@ newtype Year  = Year  Int deriving (Show, Eq)
 -- Parsed (Date (Day 12) (Month 12) (Year 2012)) (Input 10 "")
 -- >>> parse date "Dec 12 2012"
 -- Parsed (Date (Day 12) (Month 12) (Year 2012)) (Input 11 "")
+-- >>> parse date "Jan 1 2012"
+-- Parsed (Date (Day 1) (Month 1) (Year 2012)) (Input 10 "")
 -- >>> parse date "Feb 31 2012"
 -- Parsed (Date (Day 31) (Month 2) (Year 2012)) (Input 11 "")
 -- >>> parse date "12/12/2012"
