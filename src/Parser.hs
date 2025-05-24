@@ -89,7 +89,6 @@ instance Applicative Parser where
     -- Parsed 42 (Position 0 "The parser of things is a function from strings ...")
     pure = Parser . Parsed
 
-    -- TODO: check laws 
     (Parser fa2b) <*> (Parser fa) = Parser $ \inp -> case fa2b inp of
         Parsed f rest    -> case fa rest of
             Parsed x rest'  -> Parsed (f x) rest'
