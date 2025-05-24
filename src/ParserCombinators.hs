@@ -79,6 +79,9 @@ someN :: Int -> Parser a -> Parser [a]
 someN 0   _      = pure [] 
 someN cnt parser = (:) <$> parser <*> someN (cnt - 1) parser 
 
+option :: a -> Parser a -> Parser a
+option x p = p <|> pure x
+
 
 -- Discover and implement more useful parser combinators below
 --

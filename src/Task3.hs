@@ -8,10 +8,11 @@ import Parser
 import ParserCombinators
 import Data.Char (toLower)
 import Data.List (intercalate)
-import Control.Applicative (Alternative(some))
+import Control.Applicative (Alternative(some, many, (<|>)))
 import GHC.Unicode (isHexDigit)
 import GHC.Char (chr)
 import Numeric (readHex)
+import Data.Char (isDigit)
 
 -- | JSON representation
 --
@@ -100,7 +101,7 @@ jFalse :: Parser JValue
 jFalse = JBool False <$ string "false"
 
 bool :: Parser JValue
-bool = choice [jTrue, jFalse] 
+bool = jTrue <|> jFalse
 
 -- Strings
 unEscapedChar :: Parser Char
@@ -109,7 +110,7 @@ unEscapedChar = satisfy (\ch -> ch /= '\\' && ch /= '\"')
 escapedChar :: Parser Char
 escapedChar =
     let
-        rules = 
+        rules =
             [
               ("\\\"", '\"') -- quotation mark
              ,("\\\\", '\\') -- reverse solidus
@@ -120,11 +121,56 @@ escapedChar =
              ,("\\r" , '\r') -- cariage return
              ,("\\t" , '\t') -- horizontal tab
             ]
-    in choice [ chr' <$ string str | (str, chr') <- rules] 
+    in choice [ chr' <$ string str | (str, chr') <- rules]
 
-unicodeChar :: Parser Char 
+unicodeChar :: Parser Char
 unicodeChar = string "\\u" *> (hexToChar <$> someN 4 (satisfy isHexDigit) )
-    where hexToChar inp = case readHex inp of 
+    where hexToChar inp = case readHex inp of
             [(codePoint, _)] -> chr codePoint
             _                -> undefined
 
+jString :: Parser JValue
+jString =
+    let
+        quote = char '\"'
+        quotedString = (quote *> many (choice [unEscapedChar, escapedChar, unicodeChar])) <* quote
+    in JString <$> quotedString 
+
+-- Numbers (-_-;)
+
+signPart :: Parser String
+signPart = option "" (string "-")
+
+nonZeroDigit :: Parser Char 
+nonZeroDigit = satisfy (\ch -> isDigit ch && ch /= '0')
+
+zeroDigit :: Parser Char 
+zeroDigit = satisfy ('0' ==)
+
+digit :: Parser Char 
+digit = choice [zeroDigit, nonZeroDigit] 
+
+intPart :: Parser String
+intPart =
+    let
+        nonZeroInt = nonZeroDigit `addTo` many digit
+        zeroInt    = string "0" 
+    in zeroInt <|> nonZeroInt 
+
+fractionalPart :: Parser String
+fractionalPart = char '.' `addTo` some digit
+
+exponentPart :: Parser String
+exponentPart = 
+    let
+        e       = char 'e' <|> char 'E'
+        sign    = option "" (string "-" <|> string "+")  
+        convert ((ex, l), r) = [ex] ++ l ++ r 
+    in convert <$> e `andThenT` sign `andThenT` some digit
+
+jNumber :: Parser JValue 
+jNumber = 
+    let
+        convert (((sign, int), frac), e) = JNumber $ read (sign ++ int ++ frac ++ e) 
+    in convert <$> signPart `andThenT` intPart `andThenT` 
+            option "" fractionalPart `andThenT` option "" exponentPart 
