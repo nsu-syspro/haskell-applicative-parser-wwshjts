@@ -132,6 +132,13 @@ unicodeChar = string "\\u" *> (hexToChar <$> someN 4 (satisfy isHexDigit) )
             [(codePoint, _)] -> chr codePoint
             _                -> undefined
 
+quotedString :: Parser String
+quotedString = 
+    let
+        quote = char '\"'
+    in (quote *> many (choice [unEscapedChar, escapedChar, unicodeChar])) <* quote
+
+
 jString :: Parser JValue
 jString =
     let
@@ -179,13 +186,28 @@ jNumber =
             option "" fractionalPart `andThenT` option "" exponentPart
 
 -- Arrays
+
+element :: Parser JValue
+element  = whitespace *> jValue <* whitespace
+
 jArray :: Parser JValue
 jArray =
     let
         lb       = string "["
         rb       = string "]"
         comma    = string ","
-        element  = whitespace *> jValue <* whitespace
         elements = element `addTo` many (comma *> element)
         wh    = [] <$ (lb *> whitespace <* rb)
     in JArray <$> ((lb *> elements <* rb) <|> wh)
+
+jObject :: Parser JValue
+jObject =
+    let
+        lb = string "{"
+        rb = string "}"
+        comma  = string ","
+        column = string ":"
+        member = ((whitespace *> quotedString <* whitespace) <* column) `andThenT` element
+        members = member `addTo` many (comma *> member)
+        wh      = [] <$ (lb *> whitespace <* rb) 
+    in JObject <$> ((lb *> members  <* rb) <|> wh) 
