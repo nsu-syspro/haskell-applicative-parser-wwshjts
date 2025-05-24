@@ -6,13 +6,12 @@ module Task3 where
 
 import Parser
 import ParserCombinators
-import Data.Char (toLower)
+import Data.Char ( toLower, isDigit )
 import Data.List (intercalate)
 import Control.Applicative (Alternative(some, many, (<|>)))
 import GHC.Unicode (isHexDigit)
 import GHC.Char (chr)
 import Numeric (readHex)
-import Data.Char (isDigit)
 
 -- | JSON representation
 --
@@ -85,13 +84,17 @@ parseJSONFile file = parse json <$> readFile file
 
 -- Grammar
 
+-- JValue
+jValue :: Parser JValue
+jValue = choice [jString, jNumber, jBool, jNull, jArray]
+
 -- Whitespace
-whitespace :: Parser String
-whitespace = some $ anyOf [' ', '\t', '\r', '\n']
+whitespace :: Parser ()
+whitespace = () <$ many (anyOf [' ', '\t', '\r', '\n'])
 
 -- Null
-null :: Parser JValue
-null = JNull <$ string "null"
+jNull :: Parser JValue
+jNull = JNull <$ string "null"
 
 -- Booleans
 jTrue :: Parser JValue
@@ -100,8 +103,8 @@ jTrue = JBool True <$ string "true"
 jFalse :: Parser JValue
 jFalse = JBool False <$ string "false"
 
-bool :: Parser JValue
-bool = jTrue <|> jFalse
+jBool :: Parser JValue
+jBool = jTrue <|> jFalse
 
 -- Strings
 unEscapedChar :: Parser Char
@@ -134,43 +137,55 @@ jString =
     let
         quote = char '\"'
         quotedString = (quote *> many (choice [unEscapedChar, escapedChar, unicodeChar])) <* quote
-    in JString <$> quotedString 
+    in JString <$> quotedString
 
 -- Numbers (-_-;)
 
 signPart :: Parser String
 signPart = option "" (string "-")
 
-nonZeroDigit :: Parser Char 
+nonZeroDigit :: Parser Char
 nonZeroDigit = satisfy (\ch -> isDigit ch && ch /= '0')
 
-zeroDigit :: Parser Char 
+zeroDigit :: Parser Char
 zeroDigit = satisfy ('0' ==)
 
-digit :: Parser Char 
-digit = choice [zeroDigit, nonZeroDigit] 
+digit :: Parser Char
+digit = choice [zeroDigit, nonZeroDigit]
 
 intPart :: Parser String
 intPart =
     let
         nonZeroInt = nonZeroDigit `addTo` many digit
-        zeroInt    = string "0" 
-    in zeroInt <|> nonZeroInt 
+        zeroInt    = string "0"
+    in zeroInt <|> nonZeroInt
 
 fractionalPart :: Parser String
 fractionalPart = char '.' `addTo` some digit
 
 exponentPart :: Parser String
-exponentPart = 
+exponentPart =
     let
         e       = char 'e' <|> char 'E'
-        sign    = option "" (string "-" <|> string "+")  
-        convert ((ex, l), r) = [ex] ++ l ++ r 
+        sign    = option "" (string "-" <|> string "+")
+        convert ((ex, l), r) = [ex] ++ l ++ r
     in convert <$> e `andThenT` sign `andThenT` some digit
 
-jNumber :: Parser JValue 
-jNumber = 
+jNumber :: Parser JValue
+jNumber =
     let
-        convert (((sign, int), frac), e) = JNumber $ read (sign ++ int ++ frac ++ e) 
-    in convert <$> signPart `andThenT` intPart `andThenT` 
-            option "" fractionalPart `andThenT` option "" exponentPart 
+        convert (((sign, int), frac), e) = JNumber $ read (sign ++ int ++ frac ++ e)
+    in convert <$> signPart `andThenT` intPart `andThenT`
+            option "" fractionalPart `andThenT` option "" exponentPart
+
+-- Arrays
+jArray :: Parser JValue
+jArray =
+    let
+        lb       = string "["
+        rb       = string "]"
+        comma    = string ","
+        element  = whitespace *> jValue <* whitespace
+        elements = element `addTo` many (comma *> element)
+        wh    = [] <$ (lb *> whitespace <* rb)
+    in JArray <$> ((lb *> elements <* rb) <|> wh)
