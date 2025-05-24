@@ -72,6 +72,10 @@ andThen f s = f `addTo` ((: []) <$> s)
 andThenT :: Parser a -> Parser b -> Parser (a, b)
 andThenT f s = (,) <$> f <*> s 
 
+andThenM :: Monoid m => Parser m -> Parser m -> Parser m
+andThenM f s = (<>) <$> f <*> s 
+    
+
 anyOf :: [Char] -> Parser Char 
 anyOf chs = choice $ char <$> chs 
 
@@ -81,7 +85,6 @@ someN cnt parser = (:) <$> parser <*> someN (cnt - 1) parser
 
 option :: Monoid m =>  Parser m -> Parser m
 option p = p <|> pure mempty 
-
 
 -- Discover and implement more useful parser combinators below
 --

@@ -126,9 +126,7 @@ escapedChar =
     in choice (string <$> rules)
 
 unicodeChar :: Parser String
-unicodeChar = convert <$> string "\\u" `andThenT` someN 4 (satisfy isHexDigit)
-    where 
-        convert (l, r) = l ++ r 
+unicodeChar = string "\\u" `andThenM` someN 4 (satisfy isHexDigit)
 
 quotedString :: Parser String
 quotedString =
@@ -167,17 +165,13 @@ fractionalPart = char '.' `addTo` some digit
 exponentPart :: Parser String
 exponentPart =
     let
-        e       = char 'e' <|> char 'E'
+        e       = (: []) <$> (char 'e' <|> char 'E')
         sign    = option (string "-" <|> string "+")
-        convert ((ex, l), r) = [ex] ++ l ++ r
-    in convert <$> e `andThenT` sign `andThenT` some digit
+    in e `andThenM` sign `andThenM` some digit
 
 jNumber :: Parser JValue
-jNumber =
-    let
-        convert (((sign, int), frac), e) = JNumber $ read (sign ++ int ++ frac ++ e)
-    in convert <$> signPart `andThenT` intPart `andThenT`
-            option fractionalPart `andThenT` option exponentPart
+jNumber = JNumber . read <$> signPart `andThenM` intPart `andThenM`
+            option fractionalPart `andThenM` option exponentPart
 
 -- Arrays
 
