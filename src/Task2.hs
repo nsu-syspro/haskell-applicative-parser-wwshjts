@@ -111,11 +111,11 @@ usMonth :: Parser Month
 usMonth = Month . monthToInt <$> monthName
 
 dateCombiner :: Char -> Parser Day -> Parser Month -> Parser Date 
-dateCombiner delimiter dp mp = 
+dateCombiner delimiter dayp monthp = 
     let
         del = char delimiter
-        convert ((((d, _), m), _), y) = Date d m y -- pretty ugly : ( 
-    in convert <$> dp `andThenT` del `andThenT` mp `andThenT` del `andThenT` year 
+        convert ((d, m), y) = Date d m y 
+    in convert <$> (dayp <* del) `andThenT` (monthp <* del) `andThenT` year 
 
 dotFormat :: Parser Date
 dotFormat = dateCombiner '.' day month
@@ -126,6 +126,6 @@ hyphenFormat = dateCombiner '-' day month
 usFormat :: Parser Date
 usFormat = let
         del = char ' ' 
-        convert ((((m, _), d), _), y) = Date d m y -- pretty ugly : ( 
-    in convert <$> usMonth `andThenT` del `andThenT` usDay `andThenT` del `andThenT` year 
+        convert ((m, d), y) = Date d m y 
+    in convert <$> (usMonth <* del) `andThenT` (usDay <* del) `andThenT` year 
 
