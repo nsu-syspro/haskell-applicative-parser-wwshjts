@@ -1,11 +1,14 @@
 {-# OPTIONS_GHC -Wall #-}
 -- The above pragma enables all warnings
 
-module ParserCombinators where 
+module ParserCombinators where
 
 import Parser
 
 import Control.Applicative
+
+satisfyNot :: (Char -> Bool) -> Parser Char
+satisfyNot predecate = satisfy (not . predecate)
 
 -- | Parses single character
 --
@@ -62,6 +65,13 @@ choice = asum
 
 addTo :: Parser a -> Parser [a] -> Parser [a]
 addTo = liftA2 (:)
+
+andThen :: Parser a -> Parser a -> Parser [a]
+andThen f s = f `addTo` ((: []) <$> s)
+
+andThenT :: Parser a -> Parser b -> Parser (a, b)
+andThenT f s = (,) <$> f <*> s 
+
 
 -- Discover and implement more useful parser combinators below
 --
