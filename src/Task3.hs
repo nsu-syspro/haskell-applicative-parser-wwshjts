@@ -10,8 +10,7 @@ import Data.Char ( toLower, isDigit )
 import Data.List (intercalate)
 import Control.Applicative (Alternative(some, many, (<|>)))
 import GHC.Unicode (isHexDigit)
-import GHC.Char (chr)
-import Numeric (readHex)
+import Data.Foldable (Foldable(fold))
 
 -- | JSON representation
 --
@@ -44,7 +43,7 @@ data JValue =
 -- Failed [PosError 0 (Unexpected '{'),PosError 1 (Unexpected '{')]
 --
 json :: Parser JValue
-json = error "TODO: define json"
+json = element
 
 -- * Rendering helpers
 
@@ -86,7 +85,7 @@ parseJSONFile file = parse json <$> readFile file
 
 -- JValue
 jValue :: Parser JValue
-jValue = choice [jString, jNumber, jBool, jNull, jArray]
+jValue = choice [jString, jNumber, jBool, jNull, jArray, jObject]
 
 -- Whitespace
 whitespace :: Parser ()
@@ -107,44 +106,39 @@ jBool :: Parser JValue
 jBool = jTrue <|> jFalse
 
 -- Strings
-unEscapedChar :: Parser Char
-unEscapedChar = satisfy (\ch -> ch /= '\\' && ch /= '\"')
+unEscapedChar :: Parser String 
+unEscapedChar = (: []) <$> satisfy (\ch -> ch /= '\\' && ch /= '\"')
 
-escapedChar :: Parser Char
+escapedChar :: Parser String
 escapedChar =
     let
         rules =
             [
-              ("\\\"", '\"') -- quotation mark
-             ,("\\\\", '\\') -- reverse solidus
-             ,("\\/" , '/' ) -- solidus (snake)
-             ,("\\b" , '\b') -- backspace
-             ,("\\f" , '\f') -- formfeed
-             ,("\\n" , '\n') -- linefeed
-             ,("\\r" , '\r') -- cariage return
-             ,("\\t" , '\t') -- horizontal tab
+              "\\\"" -- quotation mark
+             ,"\\\\" -- reverse solidus
+             ,"\\/" -- solidus (snake)
+             ,"\\b"  -- backspace
+             ,"\\f"  -- formfeed
+             ,"\\n"  -- linefeed
+             ,"\\r"  -- cariage return
+             ,"\\t"  -- horizontal tab
             ]
-    in choice [ chr' <$ string str | (str, chr') <- rules]
+    in choice (string <$> rules)
 
-unicodeChar :: Parser Char
-unicodeChar = string "\\u" *> (hexToChar <$> someN 4 (satisfy isHexDigit) )
-    where hexToChar inp = case readHex inp of
-            [(codePoint, _)] -> chr codePoint
-            _                -> undefined
+unicodeChar :: Parser String
+unicodeChar = convert <$> string "\\u" `andThenT` someN 4 (satisfy isHexDigit)
+    where 
+        convert (l, r) = l ++ r 
 
 quotedString :: Parser String
-quotedString = 
+quotedString =
     let
         quote = char '\"'
-    in (quote *> many (choice [unEscapedChar, escapedChar, unicodeChar])) <* quote
+    in (quote *> (fold <$> many (choice [unEscapedChar, escapedChar, unicodeChar]))) <* quote
 
 
 jString :: Parser JValue
-jString =
-    let
-        quote = char '\"'
-        quotedString = (quote *> many (choice [unEscapedChar, escapedChar, unicodeChar])) <* quote
-    in JString <$> quotedString
+jString = JString <$> quotedString
 
 -- Numbers (-_-;)
 
@@ -209,5 +203,5 @@ jObject =
         column = string ":"
         member = ((whitespace *> quotedString <* whitespace) <* column) `andThenT` element
         members = member `addTo` many (comma *> member)
-        wh      = [] <$ (lb *> whitespace <* rb) 
-    in JObject <$> ((lb *> members  <* rb) <|> wh) 
+        wh      = [] <$ (lb *> whitespace <* rb)
+    in JObject <$> ((lb *> members  <* rb) <|> wh)
