@@ -7,6 +7,9 @@ import Parser
 
 import Control.Applicative
 
+satisfyNot :: (Char -> Bool) -> Parser Char
+satisfyNot predecate = satisfy (not . predecate)
+
 -- | Parses single character
 --
 -- Usage example:
@@ -17,7 +20,7 @@ import Control.Applicative
 -- Failed [Position 0 (Unexpected 'a')]
 --
 char :: Char -> Parser Char
-char = error "TODO: define char"
+char ch = satisfy (ch ==)
 
 -- | Parses given string
 --
@@ -29,7 +32,7 @@ char = error "TODO: define char"
 -- Failed [Position 0 (Unexpected 'a')]
 --
 string :: String -> Parser String
-string = error "TODO: define string"
+string = traverse char
 
 -- | Skips zero or more space characters
 --
@@ -43,7 +46,7 @@ string = error "TODO: define string"
 -- Parsed "bar" (Position 3 "")
 --
 spaces :: Parser ()
-spaces = error "TODO: define spaces"
+spaces = () <$ many (char ' ')
 
 -- | Tries to consecutively apply each of given list of parsers until one succeeds.
 -- Returns the *first* succeeding parser as result or 'empty' if all of them failed.
@@ -58,7 +61,30 @@ spaces = error "TODO: define spaces"
 -- Parsed "ba" (Position 2 "r")
 --
 choice :: (Foldable t, Alternative f) => t (f a) -> f a
-choice = error "TODO: define choice"
+choice = asum
+
+addTo :: Parser a -> Parser [a] -> Parser [a]
+addTo = liftA2 (:)
+
+andThen :: Parser a -> Parser a -> Parser [a]
+andThen f s = f `addTo` ((: []) <$> s)
+
+andThenT :: Parser a -> Parser b -> Parser (a, b)
+andThenT f s = (,) <$> f <*> s 
+
+andThenM :: Monoid m => Parser m -> Parser m -> Parser m
+andThenM f s = (<>) <$> f <*> s 
+    
+
+anyOf :: [Char] -> Parser Char 
+anyOf chs = choice $ char <$> chs 
+
+someN :: Int -> Parser a -> Parser [a]
+someN 0   _      = pure [] 
+someN cnt parser = (:) <$> parser <*> someN (cnt - 1) parser 
+
+option :: Monoid m =>  Parser m -> Parser m
+option p = p <|> pure mempty 
 
 -- Discover and implement more useful parser combinators below
 --

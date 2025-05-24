@@ -4,6 +4,9 @@
 module Task1 where
 
 import Parser
+import Data.Char (isDigit)
+import ParserCombinators
+import Control.Applicative (Alternative(some))
 
 -- | Parses natural number (including zero)
 --
@@ -21,7 +24,10 @@ import Parser
 -- Parsed 123 (Input 3 "abc")
 --
 nat :: Parser Integer
-nat = error "TODO: define nat"
+nat = fmap read digitSeq 
+
+digitSeq :: Parser String
+digitSeq = some $ satisfy isDigit
 
 -- | Parses integer number
 --
@@ -39,4 +45,4 @@ nat = error "TODO: define nat"
 -- Parsed 123 (Input 3 "abc")
 --
 int :: Parser Integer
-int = error "TODO: define int"
+int = choice [nat, read <$> addTo (char '-') digitSeq] 
