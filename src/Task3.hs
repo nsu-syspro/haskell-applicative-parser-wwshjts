@@ -107,7 +107,7 @@ jBool = jTrue <|> jFalse
 
 -- Strings
 unEscapedChar :: Parser String 
-unEscapedChar = (: []) <$> satisfy (\ch -> ch /= '\\' && ch /= '\"')
+unEscapedChar = (: []) <$> satisfy (\ch -> ch /= '\\' && ch /= '\"') <?> "unEscapedChar"
 
 escapedChar :: Parser String
 escapedChar =
@@ -123,10 +123,10 @@ escapedChar =
              ,"\\r"  -- cariage return
              ,"\\t"  -- horizontal tab
             ]
-    in choice (string <$> rules)
+    in choice (string <$> rules) <?> "escapedChar"
 
 unicodeChar :: Parser String
-unicodeChar = string "\\u" `andThenM` someN 4 (satisfy isHexDigit)
+unicodeChar = string "\\u" `andThenM` someN 4 (satisfy isHexDigit) <?> "unicodeChar"
 
 quotedString :: Parser String
 quotedString =
@@ -150,7 +150,7 @@ zeroDigit :: Parser Char
 zeroDigit = satisfy ('0' ==)
 
 digit :: Parser Char
-digit = choice [zeroDigit, nonZeroDigit]
+digit = choice [zeroDigit, nonZeroDigit] <?> "digit"
 
 intPart :: Parser String
 intPart =

@@ -15,6 +15,8 @@ module Parser
   , parse
   , parseMaybe
   , satisfy
+  , label
+  , (<?>)
   , Error(..)
   , Position(..)
   , Parsed(..)
@@ -33,6 +35,7 @@ type Input = Position String
 -- | Parsing error
 data Error =
     Unexpected Char -- ^ Unexpected character
+  | Labeled String  -- ^ Error with an extra information provided
   | EndOfInput      -- ^ Unexpected end of input
  deriving (Show, Eq)
 
@@ -61,14 +64,6 @@ instance Alternative Parsed where
         where
             deduplicate []     = []
             deduplicate (x:xs) = x : deduplicate (filter (/= x) xs)
-
--- Monads are too hard
--- instance Monad Parsed where
---     (>>=) pa fa2pb = case pa of
---         Parsed a _    -> case fa2pb a of
---             Parsed b resta2pb  -> Parsed b resta2pb
---             Failed failb       -> Failed failb
---         Failed failpa -> Failed failpa
 
 -- | Parser of value of type @a@
 newtype Parser a = Parser { runParser :: Input -> Parsed a }
@@ -126,3 +121,17 @@ satisfy predicate = Parser $ \case
         then Parsed x (Position (succ p) xs) -- I feel so haskellish when use 'succ' instead of +1
         else Failed [Position p $ Unexpected x]
     Position p [] -> Failed [Position p EndOfInput]
+
+
+-- | Label combinator 
+-- Parser can be labeled to provide more useful errors
+-- This combinator can be used to build powerful
+-- error analysis system, but it is another story. 
+-- In current version it is mostly useless and even harmful
+label :: String -> Parser a -> Parser a
+label l (Parser pa) = Parser $ \inp@(Position pos _) -> case pa inp of
+        Parsed x rest -> Parsed x rest
+        Failed err    -> Failed (Position pos (Labeled l) : err) where
+
+(<?>) :: Parser a -> String -> Parser a
+(<?>) = flip label
