@@ -143,7 +143,7 @@ jString = JString <$> quotedString
 -- Numbers (-_-;)
 
 signPart :: Parser String
-signPart = option "" (string "-")
+signPart = option (string "-")
 
 nonZeroDigit :: Parser Char
 nonZeroDigit = satisfy (\ch -> isDigit ch && ch /= '0')
@@ -168,7 +168,7 @@ exponentPart :: Parser String
 exponentPart =
     let
         e       = char 'e' <|> char 'E'
-        sign    = option "" (string "-" <|> string "+")
+        sign    = option (string "-" <|> string "+")
         convert ((ex, l), r) = [ex] ++ l ++ r
     in convert <$> e `andThenT` sign `andThenT` some digit
 
@@ -177,7 +177,7 @@ jNumber =
     let
         convert (((sign, int), frac), e) = JNumber $ read (sign ++ int ++ frac ++ e)
     in convert <$> signPart `andThenT` intPart `andThenT`
-            option "" fractionalPart `andThenT` option "" exponentPart
+            option fractionalPart `andThenT` option exponentPart
 
 -- Arrays
 
