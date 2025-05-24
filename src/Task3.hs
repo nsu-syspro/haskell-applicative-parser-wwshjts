@@ -1,11 +1,17 @@
 {-# OPTIONS_GHC -Wall #-}
+{-# LANGUAGE LambdaCase #-}
 -- The above pragma enables all warnings
 
 module Task3 where
 
 import Parser
+import ParserCombinators
 import Data.Char (toLower)
 import Data.List (intercalate)
+import Control.Applicative (Alternative(some))
+import GHC.Unicode (isHexDigit)
+import GHC.Char (chr)
+import Numeric (readHex)
 
 -- | JSON representation
 --
@@ -75,3 +81,50 @@ renderJSONFile file = renderParsed <$> parseJSONFile file
 -- | Parses given file as JSON
 parseJSONFile :: String -> IO (Parsed JValue)
 parseJSONFile file = parse json <$> readFile file
+
+-- Grammar
+
+-- Whitespace
+whitespace :: Parser String
+whitespace = some $ anyOf [' ', '\t', '\r', '\n']
+
+-- Null
+null :: Parser JValue
+null = JNull <$ string "null"
+
+-- Booleans
+jTrue :: Parser JValue
+jTrue = JBool True <$ string "true"
+
+jFalse :: Parser JValue
+jFalse = JBool False <$ string "false"
+
+bool :: Parser JValue
+bool = choice [jTrue, jFalse] 
+
+-- Strings
+unEscapedChar :: Parser Char
+unEscapedChar = satisfy (\ch -> ch /= '\\' && ch /= '\"')
+
+escapedChar :: Parser Char
+escapedChar =
+    let
+        rules = 
+            [
+              ("\\\"", '\"') -- quotation mark
+             ,("\\\\", '\\') -- reverse solidus
+             ,("\\/" , '/' ) -- solidus (snake)
+             ,("\\b" , '\b') -- backspace
+             ,("\\f" , '\f') -- formfeed
+             ,("\\n" , '\n') -- linefeed
+             ,("\\r" , '\r') -- cariage return
+             ,("\\t" , '\t') -- horizontal tab
+            ]
+    in choice [ chr' <$ string str | (str, chr') <- rules] 
+
+unicodeChar :: Parser Char 
+unicodeChar = string "\\u" *> (hexToChar <$> someN 4 (satisfy isHexDigit) )
+    where hexToChar inp = case readHex inp of 
+            [(codePoint, _)] -> chr codePoint
+            _                -> undefined
+
