@@ -60,7 +60,7 @@ instance Alternative Parsed where
     Failed fail1  <|> Failed fail2     = Failed $ deduplicate (fail1 <> fail2) -- kinda expensive
         where
             deduplicate []     = []
-            deduplicate (x:xs) = deduplicate (filter (/= x) xs)
+            deduplicate (x:xs) = x : deduplicate (filter (/= x) xs)
 
 -- Monads are too hard
 -- instance Monad Parsed where
